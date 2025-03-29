@@ -9,12 +9,18 @@ from dataclasses import asdict
 
 
 def test_create_user(session):
-    user = User(username='anderground', email="anderground@teste.com", password='senha123')
+    user = User(
+        username="anderground",
+        email="anderground@teste.com",
+        password="senha123",
+    )
 
     session.add(user)
     session.commit()
-    
-    result = session.scalar(select(User).where(User.email == 'anderground@teste.com'))
+
+    result = session.scalar(
+        select(User).where(User.email == "anderground@teste.com")
+    )
 
     assert result.id == 1
 
@@ -22,18 +28,18 @@ def test_create_user(session):
 def test_create_user_updated(session, mock_db_time):
     with mock_db_time(model=User) as time:
         new_user = User(
-            username='alice', password='secret', email='teste@test'
+            username="alice", password="secret", email="teste@test"
         )
         session.add(new_user)
         session.commit()
 
-        user = session.scalar(select(User).where(User.username == 'alice'))
+        user = session.scalar(select(User).where(User.username == "alice"))
 
     assert asdict(user) == {
-        'id': 1,
-        'username': 'alice',
-        'password': 'secret',
-        'email': 'teste@test',
-        'created_at': time,
-        'updated_at': time,
+        "id": 1,
+        "username": "alice",
+        "password": "secret",
+        "email": "teste@test",
+        "created_at": time,
+        "updated_at": time,
     }

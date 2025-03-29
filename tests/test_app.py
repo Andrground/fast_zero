@@ -1,5 +1,7 @@
 from http import HTTPStatus
 
+from fast_zero.schemas import UserPublic
+
 
 def test_read_root_deve_retornar_ok_e_ola_mundo(client):
     response = client.get("/")  # Act (AÇÃO)
@@ -25,28 +27,56 @@ def test_create_user_deve_retornar_created_e_usuario_criado(client):
     }
 
 
-def test_read_users_deve_retornar_ok_e_lista_de_usuarios(client):
+def test_create_user_deve_retornar_bad_request_e_usuario_ja_existe(client, user):
+    response = client.post(
+        "/users/",
+        json={
+            "username": "fulano",
+            "email": "email@example.com",
+            "password": "123456",
+        },
+    )
+
+    assert response.status_code == HTTPStatus.BAD_REQUEST
+    assert response.json() == {
+        "detail": "Username already exists"
+    }
+
+
+def test_create_user_deve_retornar_bad_request_e_email_ja_existe(client, user):
+    response = client.post(
+        "/users/",
+        json={
+            "username": "fulano2",
+            "email": "email@example.com",
+            "password": "123456",
+        },
+    )
+
+    assert response.status_code == HTTPStatus.BAD_REQUEST
+    assert response.json() == {
+        "detail": "Email already exists"
+    }
+
+
+def test_read_users_deve_retornar_ok_e_vazio(client):
     response = client.get("/users/")
     assert response.status_code == HTTPStatus.OK
-    assert response.json() == {
-        "users": [
-            {
-                "id": 1,
-                "username": "fulano",
-                "email": "email@example.com",
-            }
-        ]
-    }
+    assert response.json() == {"users": []}
 
 
-def test_read_user_deve_retornar_ok_e_usuario_deletado(client):
+def test_read_users_deve_retornar_ok_e_lista_de_usuarios(client, user):
+    user_schema = UserPublic.model_validate(user).model_dump()
+    response = client.get("/users/")
+    assert response.status_code == HTTPStatus.OK
+    assert response.json() == {"users": [user_schema]}
+
+
+def test_read_user_deve_retornar_ok_e_usuario_deletado(client, user):
+    user_schema = UserPublic.model_validate(user).model_dump()
     response = client.get("/users/1/")
     assert response.status_code == HTTPStatus.OK
-    assert response.json() == {
-        "id": 1,
-        "username": "fulano",
-        "email": "email@example.com",
-    }
+    assert response.json() == user_schema
 
 
 def test_read_user_deve_retornar_not_found_quando_usuario_nao_existe(client):
@@ -54,13 +84,13 @@ def test_read_user_deve_retornar_not_found_quando_usuario_nao_existe(client):
     assert response.status_code == HTTPStatus.NOT_FOUND
 
 
-def test_update_user_deve_retornar_ok_e_usuario_atualizado(client):
+def test_update_user_deve_retornar_ok_e_usuario_atualizado(client, user):
     response = client.put(
         "/users/1/",
         json={
             "username": "beltrano",
             "email": "beltrano@example.com",
-            "password": "123456"
+            "password": "123456",
         },
     )
 
@@ -68,7 +98,7 @@ def test_update_user_deve_retornar_ok_e_usuario_atualizado(client):
     assert response.json() == {
         "id": 1,
         "username": "beltrano",
-        "email": "beltrano@example.com"
+        "email": "beltrano@example.com",
     }
 
 
@@ -78,14 +108,14 @@ def test_update_user_deve_retornar_not_found_quando_usuario_nao_existe(client):
         json={
             "username": "beltrano",
             "email": "beltrano@example.com",
-            "password": "123456"
+            "password": "123456",
         },
     )
 
     assert response.status_code == HTTPStatus.NOT_FOUND
 
 
-def test_delete_user_deve_retornar_ok_e_usuario_deletado(client):
+def test_delete_user_deve_retornar_ok_e_usuario_deletado(client, user):
     response = client.delete("/users/1/")
     assert response.status_code == HTTPStatus.OK
     assert response.json() == {"message": "User deleted"}
