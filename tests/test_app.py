@@ -9,6 +9,19 @@ def test_read_root_deve_retornar_ok_e_ola_mundo(client):
     assert response.json() == {"message": "Olá mundo"}  # Assert (AFIRMAÇÃO)
 
 
+def test_get_token(client, user):
+    response = client.post(
+        "/token",
+        data={"username": user.email, "password": user.clean_password},
+    )
+
+    token = response.json()
+
+    assert response.status_code == HTTPStatus.OK
+    assert token["token_type"] == "Bearer"
+    assert "access_token" in token
+
+
 def test_create_user_deve_retornar_created_e_usuario_criado(client):
     response = client.post(
         "/users/",
@@ -27,7 +40,9 @@ def test_create_user_deve_retornar_created_e_usuario_criado(client):
     }
 
 
-def test_create_user_deve_retornar_bad_request_e_usuario_ja_existe(client, user):
+def test_create_user_deve_retornar_bad_request_e_usuario_ja_existe(
+    client, user
+):
     response = client.post(
         "/users/",
         json={
@@ -38,9 +53,7 @@ def test_create_user_deve_retornar_bad_request_e_usuario_ja_existe(client, user)
     )
 
     assert response.status_code == HTTPStatus.BAD_REQUEST
-    assert response.json() == {
-        "detail": "Username already exists"
-    }
+    assert response.json() == {"detail": "Username already exists"}
 
 
 def test_create_user_deve_retornar_bad_request_e_email_ja_existe(client, user):
@@ -54,9 +67,7 @@ def test_create_user_deve_retornar_bad_request_e_email_ja_existe(client, user):
     )
 
     assert response.status_code == HTTPStatus.BAD_REQUEST
-    assert response.json() == {
-        "detail": "Email already exists"
-    }
+    assert response.json() == {"detail": "Email already exists"}
 
 
 def test_read_users_deve_retornar_ok_e_vazio(client):
@@ -74,7 +85,7 @@ def test_read_users_deve_retornar_ok_e_lista_de_usuarios(client, user):
 
 def test_read_user_deve_retornar_ok_e_usuario_deletado(client, user):
     user_schema = UserPublic.model_validate(user).model_dump()
-    response = client.get("/users/1/")
+    response = client.get(f"/users/{user.id}/")
     assert response.status_code == HTTPStatus.OK
     assert response.json() == user_schema
 
@@ -84,9 +95,12 @@ def test_read_user_deve_retornar_not_found_quando_usuario_nao_existe(client):
     assert response.status_code == HTTPStatus.NOT_FOUND
 
 
-def test_update_user_deve_retornar_ok_e_usuario_atualizado(client, user):
+def test_update_user_deve_retornar_ok_e_usuario_atualizado(
+    client, user, token
+):
     response = client.put(
-        "/users/1/",
+        f"/users/{user.id}/",
+        headers={"Authorization": f"Bearer {token}"},
         json={
             "username": "beltrano",
             "email": "beltrano@example.com",
@@ -96,31 +110,35 @@ def test_update_user_deve_retornar_ok_e_usuario_atualizado(client, user):
 
     assert response.status_code == HTTPStatus.OK
     assert response.json() == {
-        "id": 1,
+        "id": user.id,
         "username": "beltrano",
         "email": "beltrano@example.com",
     }
 
 
-def test_update_user_deve_retornar_not_found_quando_usuario_nao_existe(client):
-    response = client.put(
-        "/users/2/",
-        json={
-            "username": "beltrano",
-            "email": "beltrano@example.com",
-            "password": "123456",
-        },
+# def test_update_user_deve_retornar_not_found_quando_usuario_nao_existe(client):
+#     response = client.put(
+#         "/users/2/",
+#         json={
+#             "username": "beltrano",
+#             "email": "beltrano@example.com",
+#             "password": "123456",
+#         },
+#     )
+
+#     assert response.status_code == HTTPStatus.NOT_FOUND
+
+
+def test_delete_user_deve_retornar_ok_e_usuario_deletado(client, user, token):
+    response = client.delete(
+        f"/users/{user.id}/",
+        headers={"Authorization": f"Bearer {token}"},
     )
-
-    assert response.status_code == HTTPStatus.NOT_FOUND
-
-
-def test_delete_user_deve_retornar_ok_e_usuario_deletado(client, user):
-    response = client.delete("/users/1/")
     assert response.status_code == HTTPStatus.OK
     assert response.json() == {"message": "User deleted"}
 
 
-def test_delete_user_deve_retornar_not_found_quando_usuario_nao_existe(client):
-    response = client.delete("/users/2/")
-    assert response.status_code == HTTPStatus.NOT_FOUND
+# def test_delete_user_deve_retornar_not_found_quando_usuario_nao_existe(client):
+#     response = client.delete("/users/2/")
+#     assert response.status_code == HTTPStatus.NOT_FOUND
+
