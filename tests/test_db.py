@@ -1,11 +1,8 @@
-from datetime import datetime
-from fast_zero.models import User, table_registry
+from dataclasses import asdict
 
 from sqlalchemy import select
 
-from contextlib import contextmanager
-
-from dataclasses import asdict
+from fast_zero.models import User
 
 
 def test_create_user(session):
