@@ -81,6 +81,16 @@ def update_user(
             status_code=HTTPStatus.FORBIDDEN,
             detail="Not enough permission",
         )
+    
+    username_user = session.scalar(
+        select(User).where(User.username == user.username)
+    )
+
+    if username_user and current_user.id != username_user.id:
+        raise HTTPException(
+            status_code=HTTPStatus.CONFLICT,
+            detail="Username or Email already exists",
+        )
 
     current_user.username = user.username
     current_user.email = user.email
