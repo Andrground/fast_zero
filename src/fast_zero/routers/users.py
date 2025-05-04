@@ -81,7 +81,7 @@ def update_user(
             status_code=HTTPStatus.FORBIDDEN,
             detail="Not enough permission",
         )
-    
+
     username_user = session.scalar(
         select(User).where(User.username == user.username)
     )
