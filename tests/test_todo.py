@@ -132,7 +132,7 @@ def test_list_todos_filter_combined(session, client, token, user):
     session.commit()
 
     response = client.get(
-        "/todos/?title=test&description=desc&state=done",
+        "/todos/?title=Test&description=desc&state=done",
         headers={"Authorization": f"Bearer {token}"},
     )
 
