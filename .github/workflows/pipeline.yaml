@@ -21,4 +21,4 @@ jobs:
         run: poetry install
 
       - name: Run tests
-        run: poetry run task test
+        run: poetry run pytest -s -x --cov=src/fast_zero -vv
